@@ -1,5 +1,26 @@
+// === [ Named references ] ====================================================
+
+// nameref displays a reference using section name (instead of numbering).
+#let nameref(label) = {
+	show ref: it => {
+		if it.element == none {
+			it
+		} else if it.element.func() != heading {
+			it
+		} else {
+			let l = it.target  // label
+			let h = it.element // heading
+			link(l, h.body)
+		}
+	}
+	ref(label)
+}
+
+// === [ Subfigures ] ==========================================================
+
 // Based on example by @RaulDurand (see https://github.com/typst/typst/issues/246#issuecomment-2953421350)
 
+// subfigure creates a new subfigure with optional caption and label.
 #let subfigure(body, caption: none, label: none) = {
 	// TODO: use `supplement: "Figure"` when https://github.com/typst/typst/issues/6722
 	// is resolved.
