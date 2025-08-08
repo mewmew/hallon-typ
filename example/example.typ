@@ -6,8 +6,7 @@
 #show link: set text(fill: blue)
 #show ref: set text(fill: blue)
 
-= Example
-<sec-example>
+= Subfigure example
 
 #let example-fig = rect(fill: aqua)
 
@@ -23,4 +22,11 @@
 
 See @fig1-a and @fig1-b of @fig1.
 
-Refer to the #nameref(<sec-example>) section.
+= Named references example
+
+Refer to the #nameref(<sec-beginning-of-summer>) section.
+
+== Rikka
+<sec-beginning-of-summer>
+
+The Rikka microseason marks the _Beginning of Summer_.
