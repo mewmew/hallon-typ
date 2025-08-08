@@ -22,16 +22,14 @@
 
 // subfigure creates a new subfigure with optional caption and label.
 #let subfigure(body, caption: none, label: none) = {
-	// TODO: use `supplement: "Figure"` when https://github.com/typst/typst/issues/6722
-	// is resolved.
-	//
-	// Using "Fig." for now. In the future, this should be configured with a show-set rule
-	// (for consistency with default settings for `figure(kind: image)`.
-	let fig = figure(body, caption: caption, kind: "subfigure", supplement: "Fig.", outlined: false)
+	// use same default supplement as `figure(kind: image)`
+	set figure(supplement: "Figure")
+	let fig = figure(body, caption: caption, kind: "subfigure", outlined: false)
 	if label == none {
-		return fig
+		fig
+	} else {
+		[ #fig #label ]
 	}
-	return [ #fig #label ]
 }
 
 #let subfig-style(body) = {
@@ -69,8 +67,7 @@
 
 	show figure.where(kind: image): set figure(supplement: "Fig.")
 	show figure.where(kind: image): set figure.caption(separator: [. ])
-	// TODO: uncomment when https://github.com/typst/typst/issues/6722 is resolved.
-	//show figure.where(kind: "subfigure"): set figure(supplement: "Fig.")
+	show figure.where(kind: "subfigure"): set figure(supplement: "Fig.")
 
 	body
 }
