@@ -2,6 +2,8 @@
 
 // Based on heading-counter code from https://github.com/jbirnick/typst-headcount (MIT)
 
+#import "util.typ": normalize-length
+
 #let reset-heading-counter(counter, levels: 1) = it => {
 	if it.level <= levels {
 		counter.update((0,))
@@ -12,16 +14,6 @@
 #let reset-figure-counter(counter) = it => {
 	counter.update((0,))
 	it
-}
-
-#let normalize-length(array, length) = {
-	if array.len() > length {
-		array = array.slice(0, length)
-	} else if array.len() < length {
-		let pad = length - array.len()
-		array += pad*(0,)
-	}
-	return array
 }
 
 #let heading-figure-dependent-numbering(style, levels: 1) = (..num) => {

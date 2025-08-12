@@ -1,6 +1,6 @@
 #set page(width: 12cm, height: auto)
 
-#import("@local/hallon:0.1.0") as hallon: subfigure
+#import "@preview/hallon:0.1.0" as hallon: subfigure
 
 // Apply subfigure styles (using one heading level as figure numbering prefix,
 // e.g. "1.1a").
