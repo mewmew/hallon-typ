@@ -14,9 +14,11 @@ See [example/example-subfig.typ](example/example-subfig.typ).
 
 ![Subfigures example](example/example-subfig.png)
 
-See [example/example-subfig-headings.typ](example/example-subfig-headings.typ).
+## Heading-dependent numbering of figures
 
-![Subfigure example using headings prefix](example/example-subfig-headings.png)
+See [example/example-figs.typ](example/example-figs.typ).
+
+![Heading-dependent numbering of figures](example/example-figs.png)
 
 ## Etymology
 

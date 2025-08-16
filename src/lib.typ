@@ -19,9 +19,9 @@
 // === [ Subfigures ] ==========================================================
 
 // export identifiers.
-#import "subfig.typ": style-subfig, subfigure
+#import "subfig.typ": style-figures, subfigure
 
 // === [ Utility functions ] ===================================================
 
 // export identifiers.
-#import "util.typ": normalize-length, title-case
+#import "util.typ": title-case

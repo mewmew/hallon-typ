@@ -1,76 +1,63 @@
-// --- [ dependent counter ] ---------------------------------------------------
+// === [ subfigure ] ===========================================================
 
-// Based on heading-counter code from https://github.com/jbirnick/typst-headcount (MIT)
+// style-figures handles (optional heading-dependent) numbering of figures and
+// subfigures.
+#let style-figures(body, heading-levels: 0) = {
+	// Numbering patterns for figures and subfigures.
+	let fig-numbering = "1."*heading-levels + "1"     // e.g. "1.1"
+	let subfig-numbering = "1."*heading-levels + "1a" // e.g. "1.1a"
 
-#import "util.typ": normalize-length
-
-#let reset-heading-counter(counter, levels: 1) = it => {
-	if it.level <= levels {
-		counter.update((0,))
-	}
-	it
-}
-
-#let reset-figure-counter(counter) = it => {
-	counter.update((0,))
-	it
-}
-
-#let heading-figure-dependent-numbering(style, levels: 1) = (..num) => {
-	let h-nums = counter(heading).get()
-	let f-num = counter(figure.where(kind: image)).get().first()
-	numbering(style, ..normalize-length(h-nums, levels), f-num, num.pos().first())
-}
-
-#let heading-dependent-numbering(style, levels: 1) = (..num) => {
-	let h-nums = counter(heading).get()
-	numbering(style, ..normalize-length(h-nums, levels), num.pos().first())
-}
-
-// --- [ subfigure ] -----------------------------------------------------------
-
-#let style-subfig(body, levels: 0) = {
-	// Style subfigure caption numbering.
-	show figure.where(kind: "subfigure"): outer => {
-		show figure.caption: it => context {
-			set align(left)
-			[#strong(it.counter.display("(a)")) #it.body]
-		}
-		outer
-	}
-
-	// Style figure caption numbering.
-	show figure.caption: it => context {
-		set align(left)
-		strong[#it.supplement~#it.counter.display(it.numbering)#it.separator]
-		it.body
-	}
-
-	// Use optionally heading-dependent numbering of figures and subfigures.
-	let fig-numbering = "1"
-	let subfig-numbering = "1a"
-	if levels > 0 {
-		fig-numbering = "1."*levels + fig-numbering       // e.g. "1.1"
-		subfig-numbering = "1."*levels + subfig-numbering // e.g. "1.1a"
-	}
-	show figure.where(kind: image): set figure(numbering: heading-dependent-numbering(fig-numbering, levels: levels))
-	show figure.where(kind: "subfigure"): set figure(numbering: heading-figure-dependent-numbering(subfig-numbering, levels: levels))
-
-	// Reset counters at parent headings and figures.
-	show heading: reset-heading-counter(counter(figure.where(kind: image)), levels: levels)
-	show figure.where(kind: image): reset-figure-counter(counter(figure.where(kind: "subfigure")))
+	// Set depth of multi-level numbering patterns.
+	show figure: set figure(level: heading-levels+1)
+	show figure: set figure(numbering: fig-numbering) // e.g. "1.1"
+	show figure.where(kind: "subfigure"): set figure(level: heading-levels+2)
+	show figure.where(kind: "subfigure"): set figure(numbering: subfig-numbering) // e.g. "1.1a"
 
 	// Set default supplement for subfigures.
 	show figure.where(kind: "subfigure"): set figure(supplement: "Figure")
 
+	// Step counter at parent heading and figure levels.
+	show heading: it => {
+		if it.level <= heading-levels {
+			counter(figure.where(kind: image)).step(level: it.level)
+			counter(figure.where(kind: table)).step(level: it.level)
+			counter(figure.where(kind: raw)).step(level: it.level)
+			counter(figure.where(kind: "subfigure")).step(level: it.level)
+		}
+		it
+	}
+	show figure.where(kind: image): outer => {
+		counter(figure.where(kind: "subfigure")).step(level: heading-levels+1)
+		outer
+	}
+
+	// Use "(a)" subfigure caption numbering.
+	show figure.where(kind: "subfigure"): outer => {
+		show figure.caption: it => {
+			strong(std.numbering("(a)", it.counter.at(outer.location()).last()))
+			[ ]
+			it.body
+		}
+		outer
+	}
+
+	// Use bold figure caption.
+	show figure: outer => {
+		show figure.caption: it => {
+			strong[#it.supplement~#std.numbering(it.numbering, ..it.counter.at(outer.location()))]
+			it.separator
+			it.body
+		}
+		outer
+	}
+
 	body
 }
 
-// Based on example by @RaulDurand (see https://github.com/typst/typst/issues/246#issuecomment-2953421350)
-
-// subfigure creates a new subfigure with optional caption and label.
-#let subfigure(body, caption: none, label: none) = {
-	let fig = figure(body, caption: caption, kind: "subfigure", outlined: false)
+// subfigure creates a new subfigure with the given arguments and an optional
+// label.
+#let subfigure(body, outlined: false, ..args, label: none) = {
+	let fig = figure(body, kind: "subfigure", outlined: outlined, ..args)
 	if label == none {
 		fig
 	} else {
