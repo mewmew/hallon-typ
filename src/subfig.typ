@@ -34,9 +34,17 @@
 	// Use "(a)" subfigure caption numbering.
 	show figure.where(kind: "subfigure"): outer => {
 		show figure.caption: it => {
-			strong(std.numbering("(a)", it.counter.at(outer.location()).last()))
-			[ ]
-			it.body
+			// Left align caption if occupying more than one line. Otherwise,
+			// center align.
+			align(
+				center,
+				block({
+					set align(left)
+					strong(std.numbering("(a)", it.counter.at(outer.location()).last()))
+					[ ]
+					it.body
+				})
+			)
 		}
 		outer
 	}
@@ -44,9 +52,17 @@
 	// Use bold figure caption.
 	show figure: outer => {
 		show figure.caption: it => {
-			strong[#it.supplement~#std.numbering(it.numbering, ..it.counter.at(outer.location()))]
-			it.separator
-			it.body
+			// Left align caption if occupying more than one line. Otherwise,
+			// center align.
+			align(
+				center,
+				block({
+					set align(left)
+					strong[#it.supplement~#std.numbering(it.numbering, ..it.counter.at(outer.location()))]
+					it.separator
+					it.body
+				})
+			)
 		}
 		outer
 	}
