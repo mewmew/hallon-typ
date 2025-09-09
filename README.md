@@ -20,6 +20,10 @@ See [example/example-figs.typ](example/example-figs.typ).
 
 ![Heading-dependent numbering of figures](example/example-figs.png)
 
+See [example/example-appendix.typ](example/example-appendix.typ).
+
+![Heading-dependent numbering of figures with appendices](example/example-appendix.png)
+
 ## Etymology
 
 Hallon (`ˈhàlɔn`) means raspberry in Swedish, a befitting name for a package that contains *"lite smått och gott"*.

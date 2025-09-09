@@ -65,6 +65,61 @@
 	)
 }
 
+// === [ Numbering patterns ] ==================================================
+
+// is-counting-symbol reports whether the given codepoint is a counting symbol
+// in a numbering pattern.
+//
+// ref: https://typst.app/docs/reference/model/numbering/#parameters-numbering
+#let is-counting-symbol(r) = {
+	let counting-symbols = (
+		"1", "a", "A", "i", "I", "α", "Α", "一", "壹", "あ",
+		"い", "ア", "イ", "א", "가", "ㄱ", "*", "١", "۱", "१",
+		"১", "ক", "①", "⓵",
+	)
+	return counting-symbols.contains(r)
+}
+
+// parse-numbering pasers the given numbering pattern.
+//
+// ref: https://typst.app/docs/reference/model/numbering/#parameters-numbering
+#let parse-numbering(numbering) = {
+	let rs = numbering.codepoints()
+	let parts = ()
+	while true {
+		let pos = rs.position(is-counting-symbol)
+		if pos == none {
+			break
+		}
+		let part = rs.slice(0, pos+1).join("")
+		rs = rs.slice(pos+1)
+		parts.push(part)
+	}
+	parts
+}
+
+// get-heading-numbering returns the active heading numbering, padded or
+// truncated to the specified number of heading levels.
+#let get-heading-numbering(loc, heading-levels) = {
+	let prev-heading = query(selector(heading).before(loc)).last()
+	if prev-heading == none {
+		return none
+	}
+	let heading-numbering = prev-heading.numbering
+	if type(heading-numbering) != str {
+		return none
+	}
+	let parts = parse-numbering(heading-numbering)
+	if parts.len() > heading-levels {
+		parts = parts.slice(0, heading-levels)
+	} else if parts.len() < heading-levels {
+		for i in range(parts.len(), heading-levels) {
+			parts.push(".1")
+		}
+	}
+	return parts.join("")
+}
+
 // === [ Subfigures ] ==========================================================
 
 // style-figures handles (optional heading-dependent) numbering of figures and
@@ -106,6 +161,7 @@
 	}
 
 	set figure(numbering: (..nums) => {
+		let fig-numbering-str = fig-numbering
 		// TODO: check if we need to provide more context (i.e. using `at` instead
 		// of `get`)?
 		//
@@ -120,7 +176,14 @@
 				heading-nums.push(0)
 			}
 		}
-		std.numbering(fig-numbering, ..heading-nums, ..nums)
+		if heading-levels > 0 {
+			// use active heading numbering if present (e.g. "A.1").
+			let heading-numbering = get-heading-numbering(here(), heading-levels)
+			if heading-numbering != none {
+				fig-numbering-str = heading-numbering + ".1"
+			}
+		}
+		std.numbering(fig-numbering-str, ..heading-nums, ..nums)
 	})
 
 	show figure.where(kind: image): outer => {
@@ -129,6 +192,7 @@
 
 		// use nesting level of figure to infer numbering of subfigures.
 		set figure(numbering: (..nums) => {
+			let subfig-numbering-str = subfig-numbering
 			let heading-nums = counter(heading).at(outer.location())
 			if heading-nums.len() > heading-levels {
 				// truncate if needed.
@@ -140,7 +204,14 @@
 				}
 			}
 			let outer-nums = counter(figure.where(kind: image)).at(outer.location())
-			std.numbering(subfig-numbering, ..heading-nums, ..outer-nums, ..nums)
+			if heading-levels > 0 {
+				// use active heading numbering if present (e.g. "A.1").
+				let heading-numbering = get-heading-numbering(here(), heading-levels)
+				if heading-numbering != none {
+					subfig-numbering-str = heading-numbering + ".1a"
+				}
+			}
+			std.numbering(subfig-numbering-str, ..heading-nums, ..outer-nums, ..nums)
 		})
 		show figure.where(kind: "subfigure"): inner => {
 			// use bold "(a)" subfigure caption.
