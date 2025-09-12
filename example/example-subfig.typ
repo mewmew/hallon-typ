@@ -1,6 +1,6 @@
 #set page(width: 12cm, height: auto)
 
-#import "@preview/hallon:0.1.0" as hallon: subfigure
+#import "@preview/hallon:0.1.1" as hallon: subfigure
 
 // Apply subfigure styles.
 #show: hallon.style-figures
