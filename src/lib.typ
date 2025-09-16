@@ -100,16 +100,20 @@
 
 // get-heading-numbering returns the active heading numbering, padded or
 // truncated to the specified number of heading levels.
-#let get-heading-numbering(loc, heading-levels) = {
-	let prev-heading = query(selector(heading).before(loc)).last()
-	if prev-heading == none {
-		return none
+#let get-heading-numbering(loc, heading-levels, heading-numbering: none) = {
+	let heading-numbering-str = heading-numbering
+	if heading-numbering == none {
+		// infer heading numbering from previous heading.
+		let prev-heading = query(selector(heading).before(loc)).last()
+		if prev-heading == none {
+			return none
+		}
+		if type(prev-heading.numbering) != str {
+			return none
+		}
+		heading-numbering-str = prev-heading.numbering
 	}
-	let heading-numbering = prev-heading.numbering
-	if type(heading-numbering) != str {
-		return none
-	}
-	let parts = parse-numbering(heading-numbering)
+	let parts = parse-numbering(heading-numbering-str)
 	if parts.len() > heading-levels {
 		parts = parts.slice(0, heading-levels)
 	} else if parts.len() < heading-levels {
@@ -124,7 +128,7 @@
 
 // style-figures handles (optional heading-dependent) numbering of figures and
 // subfigures.
-#let style-figures(body, heading-levels: 0) = {
+#let style-figures(body, heading-levels: 0, heading-numbering: none) = {
 	// Numbering patterns for figures and subfigures.
 	let fig-numbering = "1."*heading-levels + "1"     // e.g. "1.1"
 	let subfig-numbering = "1."*heading-levels + "1a" // e.g. "1.1a"
@@ -178,9 +182,9 @@
 		}
 		if heading-levels > 0 {
 			// use active heading numbering if present (e.g. "A.1").
-			let heading-numbering = get-heading-numbering(here(), heading-levels)
-			if heading-numbering != none {
-				fig-numbering-str = heading-numbering + ".1"
+			let heading-numbering-str = get-heading-numbering(here(), heading-levels, heading-numbering: heading-numbering)
+			if heading-numbering-str != none {
+				fig-numbering-str = heading-numbering-str + ".1"
 			}
 		}
 		std.numbering(fig-numbering-str, ..heading-nums, ..nums)
@@ -206,9 +210,9 @@
 			let outer-nums = counter(figure.where(kind: image)).at(outer.location())
 			if heading-levels > 0 {
 				// use active heading numbering if present (e.g. "A.1").
-				let heading-numbering = get-heading-numbering(here(), heading-levels)
-				if heading-numbering != none {
-					subfig-numbering-str = heading-numbering + ".1a"
+				let heading-numbering-str = get-heading-numbering(here(), heading-levels, heading-numbering: heading-numbering)
+				if heading-numbering-str != none {
+					subfig-numbering-str = heading-numbering-str + ".1a"
 				}
 			}
 			std.numbering(subfig-numbering-str, ..heading-nums, ..outer-nums, ..nums)
