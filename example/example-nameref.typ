@@ -1,6 +1,6 @@
 #set page(width: 12cm, height: auto)
 
-#import "@preview/hallon:0.1.1": nameref
+#import "@preview/hallon:0.1.2": nameref
 
 // Highlight links.
 #show link: set text(fill: blue)

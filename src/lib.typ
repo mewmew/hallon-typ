@@ -133,27 +133,6 @@
 	let fig-numbering = "1."*heading-levels + "1"     // e.g. "1.1"
 	let subfig-numbering = "1."*heading-levels + "1a" // e.g. "1.1a"
 
-	// Set default supplement for subfigures.
-	show figure.where(kind: "subfigure"): set figure(supplement: "Figure")
-
-	// use bold figure caption.
-	show figure.where(kind: image).or(figure.where(kind: table)).or(figure.where(kind: raw)): outer => {
-		show figure.caption: it => context {
-			// Left align caption if occupying more than one line. Otherwise,
-			// center align.
-			align(
-				center,
-				block({
-					set align(left)
-					strong[#it.supplement~#it.counter.display(it.numbering)#it.separator]
-					[ ]
-					it.body
-				})
-			)
-		}
-		outer
-	}
-
 	show heading: outer => {
 		if outer.level <= heading-levels {
 			// reset figure counter.
@@ -190,9 +169,24 @@
 		std.numbering(fig-numbering-str, ..heading-nums, ..nums)
 	})
 
-	show figure.where(kind: image): outer => {
+	show figure.where(kind: image).or(figure.where(kind: table)).or(figure.where(kind: raw)): outer => {
 		// reset subfigure counter
 		counter(figure.where(kind: "subfigure")).update(0)
+
+		// use bold figure caption.
+		show figure.caption: it => context {
+			// Left align caption if occupying more than one line. Otherwise,
+			// center align.
+			align(
+				center,
+				block({
+					set align(left)
+					strong[#it.supplement~#it.counter.display(it.numbering)#it.separator]
+					[ ]
+					it.body
+				})
+			)
+		}
 
 		// use nesting level of figure to infer numbering of subfigures.
 		set figure(numbering: (..nums) => {
@@ -207,7 +201,7 @@
 					heading-nums.push(0)
 				}
 			}
-			let outer-nums = counter(figure.where(kind: image)).at(outer.location())
+			let outer-nums = counter(figure.where(kind: outer.kind)).at(outer.location())
 			if heading-levels > 0 {
 				// use active heading numbering if present (e.g. "A.1").
 				let heading-numbering-str = get-heading-numbering(here(), heading-levels, heading-numbering: heading-numbering)
@@ -217,6 +211,10 @@
 			}
 			std.numbering(subfig-numbering-str, ..heading-nums, ..outer-nums, ..nums)
 		})
+
+		// Set default supplement for subfigures.
+		set figure(supplement: outer.supplement)
+
 		show figure.where(kind: "subfigure"): inner => {
 			// use bold "(a)" subfigure caption.
 			show figure.caption: it => context {
