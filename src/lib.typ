@@ -142,7 +142,7 @@
 }
 
 // subfigure-caption displays the caption of subfigures.
-#let subfigure-caption(it) = context {
+#let subfigure-caption(it, parent: none) = context {
 	// Left align caption if occupying more than one line. Otherwise,
 	// center align.
 	align(
@@ -241,7 +241,7 @@
 
 		show figure.where(kind: "subfigure"): inner => {
 			// use bold "(a)" subfigure caption.
-			show figure.caption: subfigure-caption
+			show figure.caption: subfigure-caption.with(parent: outer)
 			inner
 		}
 		outer
