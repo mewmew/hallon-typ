@@ -126,9 +126,45 @@
 
 // === [ Subfigures ] ==========================================================
 
+// figure-caption displays the caption of figures.
+#let figure-caption(it) = context {
+	// Left align caption if occupying more than one line. Otherwise,
+	// center align.
+	align(
+		center,
+		block({
+			set align(left)
+			strong[#it.supplement~#it.counter.display(it.numbering)#it.separator]
+			[ ]
+			it.body
+		})
+	)
+}
+
+// subfigure-caption displays the caption of subfigures.
+#let subfigure-caption(it) = context {
+	// Left align caption if occupying more than one line. Otherwise,
+	// center align.
+	align(
+		center,
+		block({
+			set align(left)
+			strong(it.counter.display("(a)"))
+			[ ]
+			it.body
+		})
+	)
+}
+
 // style-figures handles (optional heading-dependent) numbering of figures and
 // subfigures.
-#let style-figures(body, heading-levels: 0, heading-numbering: none) = {
+#let style-figures(
+	body,
+	heading-levels: 0,
+	heading-numbering: none,
+	figure-caption: figure-caption,
+	subfigure-caption: subfigure-caption,
+) = {
 	// Numbering patterns for figures and subfigures.
 	let fig-numbering = "1."*heading-levels + "1"     // e.g. "1.1"
 	let subfig-numbering = "1."*heading-levels + "1a" // e.g. "1.1a"
@@ -174,19 +210,7 @@
 		counter(figure.where(kind: "subfigure")).update(0)
 
 		// use bold figure caption.
-		show figure.caption: it => context {
-			// Left align caption if occupying more than one line. Otherwise,
-			// center align.
-			align(
-				center,
-				block({
-					set align(left)
-					strong[#it.supplement~#it.counter.display(it.numbering)#it.separator]
-					[ ]
-					it.body
-				})
-			)
-		}
+		show figure.caption: figure-caption
 
 		// use nesting level of figure to infer numbering of subfigures.
 		set figure(numbering: (..nums) => {
@@ -217,19 +241,7 @@
 
 		show figure.where(kind: "subfigure"): inner => {
 			// use bold "(a)" subfigure caption.
-			show figure.caption: it => context {
-				// Left align caption if occupying more than one line. Otherwise,
-				// center align.
-				align(
-					center,
-					block({
-						set align(left)
-						strong(std.numbering("(a)", it.counter.at(inner.location()).last()))
-						[ ]
-						it.body
-					})
-				)
-			}
+			show figure.caption: subfigure-caption
 			inner
 		}
 		outer
