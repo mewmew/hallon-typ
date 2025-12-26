@@ -6,7 +6,7 @@
 //
 // - figures:    "{heading}.{figure}"              (e.g. "1.1")
 // - subfigures: "{heading}.{figure}{subfigure}"   (e.g. "1.1a")
-#show: hallon.style-figures.with(heading-levels: 1)
+#show: hallon.style-figures(heading-levels: 1).rule
 
 // Set heading numbering style.
 #set heading(numbering: "1.1")

@@ -104,7 +104,8 @@
 	let heading-numbering-str = heading-numbering
 	if heading-numbering == none {
 		// infer heading numbering from previous heading.
-		let prev-heading = query(selector(heading).before(loc)).last()
+		// default: none workaround for https://github.com/typst/typst/issues/7625
+		let prev-heading = query(selector(heading).before(loc)).last(default: none)
 		if prev-heading == none {
 			return none
 		}
@@ -156,99 +157,134 @@
 	)
 }
 
+#let numbering-function(heading-levels, heading-numbering, location, ..nums) = {
+	// Numbering pattern
+	let numbering = "1."*heading-levels + "1"     // e.g. "1.1"
+
+	let numbering-str = numbering
+	let heading-nums = counter(heading).at(location)
+	if heading-nums.len() > heading-levels {
+		// truncate if needed.
+		heading-nums = heading-nums.slice(0, heading-levels)
+	} else if heading-nums.len() < heading-levels {
+		// zero pad if needed.
+		for i in range(heading-nums.len(), heading-levels) {
+			heading-nums.push(0)
+		}
+	}
+	if heading-levels > 0 {
+		// use active heading numbering if present (e.g. "A.1").
+		let heading-numbering-str = get-heading-numbering(location, heading-levels, heading-numbering: heading-numbering)
+		if heading-numbering-str != none {
+			numbering-str = heading-numbering-str + ".1.a"
+		}
+	}
+	std.numbering(numbering-str, ..heading-nums, ..nums)
+}
+
+#let subfigure-numbering-function(heading-levels, heading-numbering, kind, location, ..nums) = {
+	let subfig-numbering = "1."*heading-levels + "1a" // e.g. "1.1a"
+	let subfig-numbering-str = subfig-numbering
+	let heading-nums = counter(heading).at(location)
+	if heading-nums.len() > heading-levels {
+		// truncate if needed.
+		heading-nums = heading-nums.slice(0, heading-levels)
+	} else if heading-nums.len() < heading-levels {
+		// zero pad if needed.
+		for i in range(heading-nums.len(), heading-levels) {
+			heading-nums.push(0)
+		}
+	}
+	let outer-nums = counter(figure.where(kind: kind)).at(location)
+	if heading-levels > 0 {
+		// use active heading numbering if present (e.g. "A.1").
+		let heading-numbering-str = get-heading-numbering(location, heading-levels, heading-numbering: heading-numbering)
+		if heading-numbering-str != none {
+			subfig-numbering-str = heading-numbering-str + ".1a"
+		}
+	}
+	std.numbering(subfig-numbering-str, ..heading-nums, ..outer-nums, ..nums)
+}
+
 // style-figures handles (optional heading-dependent) numbering of figures and
 // subfigures.
 #let style-figures(
-	body,
 	heading-levels: 0,
 	heading-numbering: none,
 	figure-caption: figure-caption,
 	subfigure-caption: subfigure-caption,
-) = {
-	// Numbering patterns for figures and subfigures.
-	let fig-numbering = "1."*heading-levels + "1"     // e.g. "1.1"
-	let subfig-numbering = "1."*heading-levels + "1a" // e.g. "1.1a"
+) = (
+	rule: body => {
+		// Numbering patterns for figures and subfigures.
+		let fig-numbering = "1."*heading-levels + "1"     // e.g. "1.1"
 
-	show heading: outer => {
-		if outer.level <= heading-levels {
-			// reset figure counter.
-			counter(figure.where(kind: image)).update(0)
-			counter(figure.where(kind: table)).update(0)
-			counter(figure.where(kind: raw)).update(0)
+		show heading: outer => {
+			if outer.level <= heading-levels {
+				// reset figure counter.
+				counter(figure.where(kind: image)).update(0)
+				counter(figure.where(kind: table)).update(0)
+				counter(figure.where(kind: raw)).update(0)
+			}
+			outer
 		}
-		outer
+
+		set figure(numbering: (..nums) => numbering-function(heading-levels, heading-numbering, here(), ..nums))
+
+		show figure.where(kind: image).or(figure.where(kind: table)).or(figure.where(kind: raw)): outer => {
+			// reset subfigure counter
+			counter(figure.where(kind: "subfigure")).update(0)
+
+			// use bold figure caption.
+			show figure.caption: figure-caption
+
+			// use nesting level of figure to infer numbering of subfigures.
+			set figure(numbering: (..nums) => {
+				subfigure-numbering-function(heading-levels, heading-numbering, outer.kind, outer.location(), ..nums)
+			})
+
+			// Set default supplement for subfigures.
+			set figure(supplement: outer.supplement)
+
+			show figure.where(kind: "subfigure"): inner => {
+				// use bold "(a)" subfigure caption.
+				show figure.caption: subfigure-caption.with(parent: outer)
+				inner
+			}
+			outer
+		}
+
+		body
+	},
+	numbering-function: ref => {
+		if ref.element.kind == "subfigure" {
+			let kind = query(selector(figure.where(kind: image).or(figure.where(kind: table)).or(figure.where(kind: raw))).before(ref.element.location())).last().kind
+			subfigure-numbering-function.with(heading-levels, heading-numbering, kind, ref.element.location())
+		} else {
+			numbering-function.with(heading-levels, heading-numbering, ref.element.location())
+		}
 	}
+)
 
-	set figure(numbering: (..nums) => {
-		let fig-numbering-str = fig-numbering
-		// TODO: check if we need to provide more context (i.e. using `at` instead
-		// of `get`)?
-		//
-		// ref: https://github.com/typst/typst/issues/3930
-		let heading-nums = counter(heading).get()
-		if heading-nums.len() > heading-levels {
-			// truncate if needed.
-			heading-nums = heading-nums.slice(0, heading-levels)
-		} else if heading-nums.len() < heading-levels {
-			// zero pad if needed.
-			for i in range(heading-nums.len(), heading-levels) {
-				heading-nums.push(0)
+// style-equations handles (optional heading-dependent) numbering of equations
+#let style-equations(
+	heading-levels: 0,
+	heading-numbering: none,
+) = (
+	rule: body => {
+		show heading: outer => {
+			if outer.level <= heading-levels {
+				// reset equation counter.
+				counter(math.equation).update(0)
 			}
+			outer
 		}
-		if heading-levels > 0 {
-			// use active heading numbering if present (e.g. "A.1").
-			let heading-numbering-str = get-heading-numbering(here(), heading-levels, heading-numbering: heading-numbering)
-			if heading-numbering-str != none {
-				fig-numbering-str = heading-numbering-str + ".1"
-			}
-		}
-		std.numbering(fig-numbering-str, ..heading-nums, ..nums)
-	})
 
-	show figure.where(kind: image).or(figure.where(kind: table)).or(figure.where(kind: raw)): outer => {
-		// reset subfigure counter
-		counter(figure.where(kind: "subfigure")).update(0)
+		set math.equation(numbering: (..nums) => numbering-function(heading-levels, heading-numbering, here(), ..nums))
 
-		// use bold figure caption.
-		show figure.caption: figure-caption
-
-		// use nesting level of figure to infer numbering of subfigures.
-		set figure(numbering: (..nums) => {
-			let subfig-numbering-str = subfig-numbering
-			let heading-nums = counter(heading).at(outer.location())
-			if heading-nums.len() > heading-levels {
-				// truncate if needed.
-				heading-nums = heading-nums.slice(0, heading-levels)
-			} else if heading-nums.len() < heading-levels {
-				// zero pad if needed.
-				for i in range(heading-nums.len(), heading-levels) {
-					heading-nums.push(0)
-				}
-			}
-			let outer-nums = counter(figure.where(kind: outer.kind)).at(outer.location())
-			if heading-levels > 0 {
-				// use active heading numbering if present (e.g. "A.1").
-				let heading-numbering-str = get-heading-numbering(here(), heading-levels, heading-numbering: heading-numbering)
-				if heading-numbering-str != none {
-					subfig-numbering-str = heading-numbering-str + ".1a"
-				}
-			}
-			std.numbering(subfig-numbering-str, ..heading-nums, ..outer-nums, ..nums)
-		})
-
-		// Set default supplement for subfigures.
-		set figure(supplement: outer.supplement)
-
-		show figure.where(kind: "subfigure"): inner => {
-			// use bold "(a)" subfigure caption.
-			show figure.caption: subfigure-caption.with(parent: outer)
-			inner
-		}
-		outer
-	}
-
-	body
-}
+		body
+	},
+	numbering-function: ref => numbering-function.with(heading-levels, heading-numbering, ref.element.location())
+)
 
 // subfigure creates a new subfigure with the given arguments and an optional
 // label.

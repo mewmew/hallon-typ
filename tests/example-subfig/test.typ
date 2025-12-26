@@ -3,7 +3,7 @@
 #import "@preview/hallon:0.1.3" as hallon: subfigure
 
 // Apply subfigure styles.
-#show: hallon.style-figures
+#show: hallon.style-figures().rule
 
 // Use short supplement for figures and subfigures.
 //

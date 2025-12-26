@@ -24,10 +24,10 @@
 }
 
 // Apply subfigure styles with custom captions.
-#show: hallon.style-figures.with(
+#show: hallon.style-figures(
 	figure-caption: custom-figure-caption.with(supplement: "Figure"),
 	subfigure-caption: custom-subfigure-caption,
-)
+).rule
 
 // Use short supplement for figures and subfigures.
 //
