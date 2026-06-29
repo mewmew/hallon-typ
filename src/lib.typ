@@ -104,7 +104,8 @@
 	let heading-numbering-str = heading-numbering
 	if heading-numbering == none {
 		// infer heading numbering from previous heading.
-		let prev-heading = query(selector(heading).before(loc)).last()
+		// NOTE: using `default: none` as workaround for https://github.com/typst/typst/issues/7625
+		let prev-heading = query(selector(heading).before(loc)).last(default: none)
 		if prev-heading == none {
 			return none
 		}

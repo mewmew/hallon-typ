@@ -1,6 +1,6 @@
 #set page(width: 12cm, height: auto)
 
-#import "@preview/hallon:0.1.3" as hallon: subfigure
+#import "@preview/hallon:0.1.4" as hallon: subfigure
 
 // custom caption style for figures.
 #let custom-figure-caption(it, supplement: none) = context {
