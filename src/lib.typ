@@ -1,3 +1,20 @@
+// ### [ Utility functions ] ###################################################
+
+// trunc truncates the given slice to length n. If the slice is shorter than n,
+// the end is zero padded.
+#let trunc(s, n) = {
+	if s.len() > n {
+		// truncate if needed.
+		s = s.slice(0, n)
+	} else if s.len() < n {
+		// zero pad if needed.
+		for i in range(s.len(), n) {
+			s.push(0)
+		}
+	}
+	return s
+}
+
 // === [ Named references ] ====================================================
 
 // nameref displays a reference using section name (instead of numbering).
@@ -187,15 +204,7 @@
 		//
 		// ref: https://github.com/typst/typst/issues/3930
 		let heading-nums = counter(heading).get()
-		if heading-nums.len() > heading-levels {
-			// truncate if needed.
-			heading-nums = heading-nums.slice(0, heading-levels)
-		} else if heading-nums.len() < heading-levels {
-			// zero pad if needed.
-			for i in range(heading-nums.len(), heading-levels) {
-				heading-nums.push(0)
-			}
-		}
+		heading-nums = trunc(heading-nums, heading-levels)
 		if heading-levels > 0 {
 			// use active heading numbering if present (e.g. "A.1").
 			let heading-numbering-str = get-heading-numbering(here(), heading-levels, heading-numbering: heading-numbering)
@@ -217,15 +226,7 @@
 		set figure(numbering: (..nums) => {
 			let subfig-numbering-str = subfig-numbering
 			let heading-nums = counter(heading).at(outer.location())
-			if heading-nums.len() > heading-levels {
-				// truncate if needed.
-				heading-nums = heading-nums.slice(0, heading-levels)
-			} else if heading-nums.len() < heading-levels {
-				// zero pad if needed.
-				for i in range(heading-nums.len(), heading-levels) {
-					heading-nums.push(0)
-				}
-			}
+			heading-nums = trunc(heading-nums, heading-levels)
 			let outer-nums = counter(figure.where(kind: outer.kind)).at(outer.location())
 			if heading-levels > 0 {
 				// use active heading numbering if present (e.g. "A.1").
